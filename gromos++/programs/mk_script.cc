@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
   usage += "\t\t[leumb       <local elevation umbrellas>]\n";
   usage += "\t\t[bsleus      <B&S-LEUS topology file>]\n";
   usage += "\t\t[qmmm        <QMMM specification file>]\n";
-  usage += "\t\t[torch       <Torch specification file>\n]";
+  usage += "\t\t[torch       <Torch specification file>]\n";
   usage += "\t\t[jin         <J formatted input file>]\n";
   usage += "\t\t[jtrj        <J formatted trajectory file>]\n";
   usage += "\t\t[pttopo      <perturbation topology>]\n";
