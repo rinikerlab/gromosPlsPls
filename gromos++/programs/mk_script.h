@@ -24,7 +24,7 @@ enum filetype {
   unknownfile, inputfile, topofile, coordfile, refposfile, anatrxfile,
   posresspecfile, xrayfile, disresfile, pttopofile, gamdfile, dihresfile, angresfile, jvaluefile, orderfile,
   symfile, colvarresfile,
-  ledihfile, leumbfile, bsleusfile, qmmmfile, frictionfile, outputfile, outtrxfile, outtrvfile,
+  ledihfile, leumbfile, bsleusfile, qmmmfile, torchfile, frictionfile, outputfile, outtrxfile, outtrvfile,
   outtrffile, outtrefile, outtrgfile,
   jinfile, joutfile, jtrjfile,
   scriptfile, outbaefile, outbagfile,
@@ -53,6 +53,7 @@ const FT filetypes[] = {FT("", unknownfile),
   FT("leumb", leumbfile),
   FT("bsleus", bsleusfile),
   FT("qmmm", qmmmfile),
+  FT("torch", torchfile),
   FT("jin", jinfile),
   FT("jout", joutfile),
   FT("jtrj", jtrjfile),
@@ -88,7 +89,7 @@ enum blocktype {
   orderparamresblock, overalltransrotblock,
   pairlistblock, pathintblock, perscaleblock,
   perturbationblock, polariseblock, positionresblock,
-  pressurescaleblock, precalclamblock, printoutblock, qmmmblock,
+  pressurescaleblock, precalclamblock, printoutblock, qmmmblock, torchblock,
   randomnumbersblock, readtrajblock, replicablock, reedsblock, rottransblock,
   sasablock, stepblock, stochdynblock, symresblock, systemblock,
   thermostatblock, umbrellablock, virialblock, virtualatomblock,
@@ -145,6 +146,7 @@ const BT blocktypes[] = {BT("", unknown),
   BT("PRESSURESCALE", pressurescaleblock),
   BT("PRINTOUT", printoutblock),
   BT("QMMM", qmmmblock),
+  BT("TORCH", torchblock),
   BT("RANDOMNUMBERS", randomnumbersblock),
   BT("READTRAJ", readtrajblock),
   BT("REPLICA", replicablock),
@@ -725,6 +727,14 @@ struct iqmmm {
   }
 };
 
+struct itorch {
+  int found, torch;
+  itorch() {
+    found = 0;
+    torch = 0;
+  }
+};
+
 class irandomnumbers {
 public:
   int found, ntrng, ntgsl;
@@ -979,6 +989,7 @@ public:
   iwritetraj writetraj;
   ixrayres xrayres;
   iqmmm qmmm;
+  itorch torch;
   std::vector<iunknown> unknown;
 };
 
@@ -2316,6 +2327,21 @@ std::istringstream & operator>>(std::istringstream &is, iqmmm &s) {
   return is;
 }
 
+std::istringstream & operator>>(std::istringstream &is, itorch &s) {
+  s.found = 1;
+  readValue("TORCH", "TORCH", is, s.torch, "0,1");
+  std::string st;
+  if (is.eof() == false) {
+    is >> st;
+    if (st != "" || is.eof() == false) {
+      std::stringstream ss;
+      ss << "unexpected end of TORCH block, read \"" << st << "\" instead of \"END\"";
+      printError(ss.str());
+    }
+  }
+  return is;
+}
+
 std::istringstream & operator>>(std::istringstream &is, irandomnumbers &s) {
   s.found = 1;
   readValue("RANDOMNUMBERS", "NTRNG", is, s.ntrng, "0,1");
@@ -2891,6 +2917,8 @@ gio::Ginstream & operator>>(gio::Ginstream &is, input &gin) {
         case printoutblock: bfstream >> gin.printout;
           break;
         case qmmmblock: bfstream >> gin.qmmm;
+          break;
+        case torchblock: bfstream >> gin.torch;
           break;
         case randomnumbersblock: bfstream >> gin.randomnumbers;
           break;
@@ -4238,6 +4266,17 @@ std::ostream & operator<<(std::ostream &os, input &gin) {
 
     os << "END\n";
   }
+
+  //TORCH (md++)
+  if (gin.torch.found) {
+  os << "TORCH\n"
+     << "#   TORCH\n"
+     << std::setw(10) << gin.torch.torch;
+  os << "\n";  
+
+    os << "END\n";
+  }
+
   // EXTRA
 
   // Unknown blocks
